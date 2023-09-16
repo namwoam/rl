@@ -17,7 +17,8 @@ class DynamicProgramming:
         self.discount_factor = discount_factor
         self.threshold = 1e-4  # default threshold for convergence
         self.values = np.zeros(grid_world.get_state_space())  # V(s)
-        self.policy = np.zeros(grid_world.get_state_space(), dtype=int)  # pi(s)
+        self.policy = np.zeros(
+            grid_world.get_state_space(), dtype=int)  # pi(s)
 
     def set_threshold(self, threshold: float) -> None:
         """Set the threshold for convergence
@@ -53,6 +54,11 @@ class DynamicProgramming:
         Returns:
             float
         """
+        next_state, reward, done = self.grid_world.step(state, action)
+        if done:
+            return 0
+        q = reward + self.discount_factor * self.get_q_value(next_state , reward)
+        return q
         # TODO: Get reward from the environment and calculate the q-value
         raise NotImplementedError
 
@@ -81,11 +87,20 @@ class IterativePolicyEvaluation(DynamicProgramming):
             float: value
         """
         # TODO: Get the value for a state by calculating the q-values
+        state_policy = self.policy[state]
+        next_state_value = 0
+        for index, probability in enumerate(state_policy):
+            action = index+1
+            next_state_value += probability * \
+                self.get_q_value(state, action)
+        return next_state_value
         raise NotImplementedError
 
     def evaluate(self):
         """Evaluate the policy and update the values for one iteration"""
         # TODO: Implement the policy evaluation step
+        new_values = np.array(self.values.shape)
+        for state in range(self.)
         raise NotImplementedError
 
     def run(self) -> None:
