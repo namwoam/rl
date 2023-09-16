@@ -56,8 +56,8 @@ class DynamicProgramming:
         """
         next_state, reward, done = self.grid_world.step(state, action)
         if done:
-            return 0
-        q = reward + self.discount_factor * self.get_q_value(next_state , reward)
+            return reward
+        q = reward + self.discount_factor * self.values[next_state]
         return q
         # TODO: Get reward from the environment and calculate the q-value
         raise NotImplementedError
@@ -90,21 +90,31 @@ class IterativePolicyEvaluation(DynamicProgramming):
         state_policy = self.policy[state]
         next_state_value = 0
         for index, probability in enumerate(state_policy):
-            action = index+1
-            next_state_value += probability * \
-                self.get_q_value(state, action)
+            action = index
+            next_state_value += probability * self.get_q_value(state, action)
+        # print(f"state value at state-{state} is:{next_state_value}")
         return next_state_value
         raise NotImplementedError
 
     def evaluate(self):
         """Evaluate the policy and update the values for one iteration"""
         # TODO: Implement the policy evaluation step
-        new_values = np.array(self.values.shape)
-        for state in range(self.)
+        new_values = np.zeros(self.grid_world.get_state_space())
+        for state in range(self.grid_world.get_state_space()):
+            new_values[state] = self.get_state_value(state)
+        delta = np.max(np.abs(self.values - new_values))
+        self.values = new_values
+        return delta
+
         raise NotImplementedError
 
     def run(self) -> None:
         """Run the algorithm until convergence."""
+        while True:
+            delta = self.evaluate()
+            print(delta)
+            if (delta < self.threshold):
+                return
         # TODO: Implement the iterative policy evaluation algorithm until convergence
         raise NotImplementedError
 
