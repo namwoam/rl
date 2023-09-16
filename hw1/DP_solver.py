@@ -110,12 +110,13 @@ class IterativePolicyEvaluation(DynamicProgramming):
 
     def run(self) -> None:
         """Run the algorithm until convergence."""
+        # TODO: Implement the iterative policy evaluation algorithm until convergence
         while True:
             delta = self.evaluate()
-            print(delta)
-            if (delta < self.threshold):
-                return
-        # TODO: Implement the iterative policy evaluation algorithm until convergence
+            # print(delta)
+            if delta < self.threshold:
+                break
+        return
         raise NotImplementedError
 
 
@@ -139,21 +140,53 @@ class PolicyIteration(DynamicProgramming):
             float
         """
         # TODO: Get the value for a state by calculating the q-values
+        return self.get_q_value(state, self.policy[state])
         raise NotImplementedError
 
     def policy_evaluation(self):
         """Evaluate the policy and update the values"""
         # TODO: Implement the policy evaluation step
+        while True:
+            new_values = np.zeros(self.grid_world.get_state_space())
+            for state in range(self.grid_world.get_state_space()):
+                new_values[state] = self.get_state_value(state)
+            delta = np.max(np.abs(self.values - new_values))
+            self.values = new_values
+            # print(f"delta={delta}")
+            if delta < self.threshold:
+                break
+        return
         raise NotImplementedError
 
     def policy_improvement(self):
         """Improve the policy based on the evaluated values"""
         # TODO: Implement the policy improvement step
+        new_policy = np.zeros(self.grid_world.get_state_space(), dtype=int)
+        for state in range(self.grid_world.get_state_space()):
+            best_action = -1
+            best_value = float('-inf')
+            for action in range(self.grid_world.get_action_space()):
+                value = self.get_q_value(state, action)
+                if value > best_value:
+                    best_action = action
+                    best_value = value
+            assert best_action != -1
+            new_policy[state] = best_action
+        return new_policy
         raise NotImplementedError
 
     def run(self) -> None:
         """Run the algorithm until convergence"""
         # TODO: Implement the policy iteration algorithm until convergence
+        while True:
+            # print("Evaluating policy")
+            self.policy_evaluation()
+            # print("Improving policy")
+            new_policy = self.policy_improvement()
+            if np.all(new_policy == self.policy):
+                break
+            self.policy = new_policy
+        return
         raise NotImplementedError
 
 
@@ -177,6 +210,10 @@ class ValueIteration(DynamicProgramming):
             float
         """
         # TODO: Get the value for a state by calculating the q-values
+        values_from_action = np.zeros(self.grid_world.get_action_space())
+        for action in range(self.grid_world.get_action_space()):
+            values_from_action[action] = self.get_q_value(state, action)
+        return np.max(values_from_action)
         raise NotImplementedError
 
     def policy_evaluation(self):
@@ -189,9 +226,36 @@ class ValueIteration(DynamicProgramming):
         # TODO: Implement the policy improvement step
         raise NotImplementedError
 
+    def value_iteration(self):
+        new_values = np.zeros(self.grid_world.get_state_space())
+        for state in range(self.grid_world.get_state_space()):
+            new_values[state] = self.get_state_value(state)
+        delta = np.max(np.abs(self.values - new_values))
+        self.values = new_values
+        return delta
+
+    def policy_generation(self):
+        for state in range(self.grid_world.get_state_space()):
+            best_action = -1
+            best_value = float('-inf')
+            for action in range(self.grid_world.get_action_space()):
+                value = self.get_q_value(state, action)
+                if value > best_value:
+                    best_action = action
+                    best_value = value
+            assert best_action != -1
+            self.policy[state] = best_action
+        return
+
     def run(self) -> None:
         """Run the algorithm until convergence"""
         # TODO: Implement the value iteration algorithm until convergence
+        while True:
+            delta = self.value_iteration()
+            if delta < self.threshold:
+                break
+        self.policy_generation()
+        return
         raise NotImplementedError
 
 
