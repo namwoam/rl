@@ -1,3 +1,4 @@
+from enum import Enum
 import numpy as np
 
 from gridworld import GridWorld
@@ -259,6 +260,13 @@ class ValueIteration(DynamicProgramming):
         raise NotImplementedError
 
 
+class AsyncDPAlgorithm(Enum):
+    INPLACE = 1
+    PRIORITIZED = 2
+    REALTIME = 3
+    QLEARNING = 4
+
+
 class AsyncDynamicProgramming(DynamicProgramming):
     def __init__(self, grid_world: GridWorld, discount_factor: float = 1.0):
         """Constructor for ValueIteration
@@ -268,8 +276,43 @@ class AsyncDynamicProgramming(DynamicProgramming):
             discount_factor (float, optional): Discount factor gamma. Defaults to 1.0.
         """
         super().__init__(grid_world, discount_factor)
+        self.algorithm_selection = AsyncDPAlgorithm.INPLACE
+        self.Q_table = np.zeros(
+            [self.grid_world.get_state_space(), self.grid_world.get_action_space()])
+
+    def run_inplace(self) -> None:
+        # estimate value
+        while True:
+            delta = 0
+            for state in range(self.grid_world.get_state_space()):
+                for action in range(self.grid_world.get_action_space()):
+                    self.Q_table[state,
+                                 action] = self.get_q_value(
+                        state, action)
+                new_value = np.max(self.Q_table[state, :])
+                delta = np.max([delta, np.abs(new_value - self.values[state])])
+                self.values[state] = new_value
+            if delta < self.threshold:
+                break
+        # generate policy with greedy
+        for state in range(self.grid_world.get_state_space()):
+            self.policy[state] = np.argmax(self.Q_table[state, :])
+        return
+
+    def run_prioritized(self) -> None:
+        pass
+
+    def run_realtime(self) -> None:
+        pass
+
 
     def run(self) -> None:
         """Run the algorithm until convergence"""
         # TODO: Implement the async dynamic programming algorithm until convergence
+        if self.algorithm_selection == AsyncDPAlgorithm.INPLACE:
+            return self.run_inplace()
+        elif self.algorithm_selection == AsyncDPAlgorithm.PRIORITIZED:
+            return self.run_prioritized()
+        elif self.algorithm_selection == AsyncDPAlgorithm.REALTIME:
+            return self.run_realtime()
         raise NotImplementedError
