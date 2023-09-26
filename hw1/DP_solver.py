@@ -1,5 +1,6 @@
 from enum import Enum
 import numpy as np
+import heapq
 
 from gridworld import GridWorld
 
@@ -264,7 +265,6 @@ class AsyncDPAlgorithm(Enum):
     INPLACE = 1
     PRIORITIZED = 2
     REALTIME = 3
-    QLEARNING = 4
 
 
 class AsyncDynamicProgramming(DynamicProgramming):
@@ -276,19 +276,28 @@ class AsyncDynamicProgramming(DynamicProgramming):
             discount_factor (float, optional): Discount factor gamma. Defaults to 1.0.
         """
         super().__init__(grid_world, discount_factor)
-        self.algorithm_selection = AsyncDPAlgorithm.INPLACE
         self.Q_table = np.zeros(
             [self.grid_world.get_state_space(), self.grid_world.get_action_space()])
 
     def run_inplace(self) -> None:
         # estimate value
+        reward = np.zeros([self.grid_world.get_state_space(),
+                          self.grid_world.get_action_space()])
+        done = np.zeros([self.grid_world.get_state_space(),
+                        self.grid_world.get_action_space()])
+        next_state = np.zeros([self.grid_world.get_state_space(
+        ), self.grid_world.get_action_space()], dtype=int)
+        for state in range(self.grid_world.get_state_space()):
+            for action in range(self.grid_world.get_action_space()):
+                next_state[state, action], reward[state, action], done[state,
+                                                                       action] = self.grid_world.step(state, action)
+
         while True:
             delta = 0
             for state in range(self.grid_world.get_state_space()):
                 for action in range(self.grid_world.get_action_space()):
                     self.Q_table[state,
-                                 action] = self.get_q_value(
-                        state, action)
+                                 action] = reward[state, action] + self.discount_factor * self.values[next_state[state, action]]
                 new_value = np.max(self.Q_table[state, :])
                 delta = np.max([delta, np.abs(new_value - self.values[state])])
                 self.values[state] = new_value
@@ -299,16 +308,94 @@ class AsyncDynamicProgramming(DynamicProgramming):
             self.policy[state] = np.argmax(self.Q_table[state, :])
         return
 
+    def inverse_action(self, action: int):
+        if action == 0:
+            return 1
+        elif action == 1:
+            return 0
+        elif action == 2:
+            return 3
+        elif action == 4:
+            return 3
+        raise ValueError
+
     def run_prioritized(self) -> None:
-        pass
+        internal_policy = np.full(self.policy.shape, -1)
+        next_states = np.zeros([self.grid_world.get_state_space(
+        ), self.grid_world.get_action_space()], dtype=int)
+        prev_states = np.zeros([self.grid_world.get_state_space(
+        ), self.grid_world.get_action_space()], dtype=int)
+        for state in range(self.grid_world.get_state_space()):
+            for action in range(self.grid_world.get_action_space()):
+                next_states[state, action], _, _ = self.grid_world.step(
+                    state, action)
+                prev_states[next_states[state, action],
+                            action] = state
+        while True:
+            h = []
+            for state in range(self.grid_world.get_state_space()):
+                heapq.heappush(h, (float("inf"), state))
+            delta = 0
+            while len(h) != 0:
+                heap_content = heapq.heappop(h)
+                state = heap_content[1]
+                # print("target:", heap_content)
+                outcomes = np.zeros(self.grid_world.get_action_space())
+                for action in range(self.grid_world.get_action_space()):
+                    outcomes[action] = self.get_q_value(state, action)
+                best_action = np.random.choice(
+                    np.where(outcomes == outcomes.max())[0])
+                new_state_value = outcomes[best_action]
+                delta = np.max(
+                    [np.abs(self.values[state] - new_state_value), delta])
+                self.values[state] = new_state_value
+                internal_policy[state] = np.argmax(outcomes)
+                for prev_action, prev_state in enumerate(prev_states[state]):
+                    if prev_state == state or (prev_action != internal_policy[prev_state] and internal_policy[prev_state] != -1):
+                        continue
+                    error = np.abs(
+                        self.get_q_value(prev_state, prev_action) - self.values[prev_state])
+                    if error > 0:
+                        heapq.heappush(h, (-error, prev_state))
+            if delta < self.threshold:
+                break
+        self.policy = internal_policy
+        # generate policy with greedy
+        return
 
     def run_realtime(self) -> None:
-        pass
-
+        while True:
+            delta = 0
+            epoch_start_location = self.grid_world.get_state_space()//2
+            for start_state in np.random.randint(0, self.grid_world.get_state_space(), size=epoch_start_location):
+                current_state = start_state
+                while True:
+                    for action in range(self.grid_world.get_action_space()):
+                        self.Q_table[current_state,
+                                     action] = self.get_q_value(current_state, action)
+                    best_action = np.random.choice(
+                        np.where(self.Q_table[current_state] == self.Q_table[current_state].max())[0])
+                    delta = np.max(
+                        [delta, np.abs(self.Q_table[current_state, best_action] - self.values[current_state])])
+                    self.values[current_state] = self.Q_table[current_state, best_action]
+                    next_state, _, done = self.grid_world.step(
+                        current_state, best_action)
+                    if done:
+                        break
+                    else:
+                        current_state = next_state
+            if delta < self.threshold:
+                break
+        # generate policy with greedy
+        for state in range(self.grid_world.get_state_space()):
+            self.policy[state] = np.argmax(self.Q_table[state, :])
+        return
 
     def run(self) -> None:
         """Run the algorithm until convergence"""
         # TODO: Implement the async dynamic programming algorithm until convergence
+        np.random.seed(1000)
+        self.algorithm_selection = AsyncDPAlgorithm.PRIORITIZED
         if self.algorithm_selection == AsyncDPAlgorithm.INPLACE:
             return self.run_inplace()
         elif self.algorithm_selection == AsyncDPAlgorithm.PRIORITIZED:
