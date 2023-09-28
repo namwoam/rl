@@ -405,7 +405,7 @@ class AsyncDynamicProgramming(DynamicProgramming):
         """Run the algorithm until convergence"""
         # TODO: Implement the async dynamic programming algorithm until convergence
         np.random.seed(1000)
-        self.algorithm_selection = AsyncDPAlgorithm.REALTIME
+        self.algorithm_selection = AsyncDPAlgorithm.INPLACE
         if self.algorithm_selection == AsyncDPAlgorithm.INPLACE:
             return self.run_inplace()
         elif self.algorithm_selection == AsyncDPAlgorithm.PRIORITIZED:
