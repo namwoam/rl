@@ -18,8 +18,8 @@ class DynamicProgramming:
         self.grid_world = grid_world
         self.discount_factor = discount_factor
         self.action_space = grid_world.get_action_space()
-        self.state_space  = grid_world.get_state_space()
-        self.values       = np.zeros(self.state_space)
+        self.state_space = grid_world.get_state_space()
+        self.values = np.zeros(self.state_space)
 
     def get_all_state_values(self) -> np.array:
         return self.values
@@ -38,11 +38,29 @@ class MonteCarloPrediction(DynamicProgramming):
 
     def run(self) -> None:
         """Run the algorithm until self.grid_world.check() == False"""
-        # TODO: Update self.values with first-visit Monte-Carlo method
+        # TODO: Update self.values with TD(0) Algorithm
         current_state = self.grid_world.reset()
+        episode_states = []
+        episode_rewards = []
+        returns = [[] for _ in range(self.grid_world.get_state_space())]
         while self.grid_world.check():
             next_state, reward, done = self.grid_world.step()
-            continue
+            episode_states.append(current_state)
+            episode_rewards.append(reward)
+            if done:
+                assert len(episode_states) == len(episode_rewards)
+                T = len(episode_states)
+                G = 0
+                for t in range(T-1, -1, -1):
+                    G = self.discount_factor*G + episode_rewards[t]
+                    if episode_states[t] not in episode_states[:t]:
+                        returns[episode_states[t]].append(G)
+                episode_rewards = []
+                episode_states = []
+            else:
+                current_state = next_state
+        for state in range(self.grid_world.get_state_space()):
+            self.values[state] = np.average(returns[state])
 
 
 class TDPrediction(DynamicProgramming):
@@ -56,7 +74,7 @@ class TDPrediction(DynamicProgramming):
             learning_rate (float): learning rate for updating state value
         """
         super().__init__(grid_world, discount_factor)
-        self.lr     = learning_rate
+        self.lr = learning_rate
 
     def run(self) -> None:
         """Run the algorithm until self.grid_world.check() == False"""
@@ -64,7 +82,7 @@ class TDPrediction(DynamicProgramming):
         current_state = self.grid_world.reset()
         while self.grid_world.check():
             next_state, reward, done = self.grid_world.step()
-            continue
+            
 
 
 class NstepTDPrediction(DynamicProgramming):
@@ -78,8 +96,8 @@ class NstepTDPrediction(DynamicProgramming):
             learning_rate (float): learning rate for updating state value
         """
         super().__init__(grid_world, discount_factor)
-        self.lr     = learning_rate
-        self.n      = num_step
+        self.lr = learning_rate
+        self.n = num_step
 
     def run(self) -> None:
         """Run the algorithm until self.grid_world.check() == False"""
