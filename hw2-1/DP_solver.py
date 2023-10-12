@@ -82,7 +82,14 @@ class TDPrediction(DynamicProgramming):
         current_state = self.grid_world.reset()
         while self.grid_world.check():
             next_state, reward, done = self.grid_world.step()
-            
+            if done:
+                self.values[current_state] = self.values[current_state] + \
+                    self.lr*(reward - self.values[current_state])
+            else:
+                self.values[current_state] = self.values[current_state] + self.lr*(
+                    reward + self.discount_factor*self.values[next_state] - self.values[current_state])
+
+            current_state = next_state
 
 
 class NstepTDPrediction(DynamicProgramming):
