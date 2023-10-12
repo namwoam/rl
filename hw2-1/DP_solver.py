@@ -110,6 +110,33 @@ class NstepTDPrediction(DynamicProgramming):
         """Run the algorithm until self.grid_world.check() == False"""
         # TODO: Update self.values with N-step TD Algorithm
         current_state = self.grid_world.reset()
+        T = 10**8
+        t = 0
+        episode_states = [current_state]
+        episode_rewards = [0]
         while self.grid_world.check():
             next_state, reward, done = self.grid_world.step()
-            continue
+            # print(current_state, next_state, reward, done)
+            if t < T:
+                episode_states.append(next_state)
+                episode_rewards.append(reward)
+                if done:
+                    T = t+1
+                    episode_states[-1] = 666
+            tau = t - self.n + 1
+            if tau >= 0:
+                G = np.sum([(self.discount_factor**(i - tau - 1))*episode_rewards[i]
+                           for i in range(tau+1, np.min([tau+self.n, T])+1)])
+                if tau+self.n < T:
+                    G = G+(self.discount_factor**self.n) * \
+                        self.values[episode_states[tau+self.n]]
+                self.values[episode_states[tau]] = self.values[episode_states[tau]] + \
+                    self.lr*(G - self.values[episode_states[tau]])
+            current_state = next_state
+            if tau == T-1:
+                T = 10**8
+                t = 0
+                episode_states = [current_state]
+                episode_rewards = [0]
+            else:
+                t += 1
