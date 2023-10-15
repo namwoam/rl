@@ -10,14 +10,14 @@ from gridworld import GridWorld
 
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
-STEP_REWARD       = -0.1
-GOAL_REWARD       = 1.0
-TRAP_REWARD       = -1.0
-DISCOUNT_FACTOR   = 0.99
-LEARNING_RATE     = 0.01
-EPSILON           = 0.2
-BUFFER_SIZE       = 10000
-UPDATE_FREQUENCY  = 200
+STEP_REWARD = -0.1
+GOAL_REWARD = 1.0
+TRAP_REWARD = -1.0
+DISCOUNT_FACTOR = 0.99
+LEARNING_RATE = 0.01
+EPSILON = 0.2
+BUFFER_SIZE = 10000
+UPDATE_FREQUENCY = 200
 SAMPLE_BATCH_SIZE = 500
 
 
@@ -50,14 +50,15 @@ def init_grid_world(maze_file: str = "maze.txt"):
     print()
     return grid_world
 
+
 def run_MC_policy_iteration(grid_world: GridWorld, iter_num: int):
     print(bold(underline("MC Policy Iteration")))
     policy_iteration = MonteCarloPolicyIteration(
-            grid_world, 
-            discount_factor=DISCOUNT_FACTOR,
-            learning_rate=LEARNING_RATE,
-            epsilon= EPSILON,
-            )
+        grid_world,
+        discount_factor=DISCOUNT_FACTOR,
+        learning_rate=LEARNING_RATE,
+        epsilon=EPSILON,
+    )
     policy_iteration.run(max_episode=iter_num)
     grid_world.visualize(
         policy_iteration.get_max_state_values(),
@@ -75,14 +76,15 @@ def run_MC_policy_iteration(grid_world: GridWorld, iter_num: int):
     grid_world.reset()
     print()
 
+
 def run_SARSA(grid_world: GridWorld, iter_num: int):
     print(bold(underline("SARSA Policy Iteration")))
     policy_iteration = SARSA(
-            grid_world, 
-            discount_factor=DISCOUNT_FACTOR,
-            learning_rate=LEARNING_RATE,
-            epsilon= EPSILON,
-            )
+        grid_world,
+        discount_factor=DISCOUNT_FACTOR,
+        learning_rate=LEARNING_RATE,
+        epsilon=EPSILON,
+    )
     policy_iteration.run(max_episode=iter_num)
     grid_world.visualize(
         policy_iteration.get_max_state_values(),
@@ -100,17 +102,18 @@ def run_SARSA(grid_world: GridWorld, iter_num: int):
     grid_world.reset()
     print()
 
+
 def run_Q_Learning(grid_world: GridWorld, iter_num: int):
     print(bold(underline("Q_Learning Policy Iteration")))
     policy_iteration = Q_Learning(
-            grid_world, 
-            discount_factor=DISCOUNT_FACTOR,
-            learning_rate=LEARNING_RATE,
-            epsilon= EPSILON,
-            buffer_size=BUFFER_SIZE,
-            update_frequency=UPDATE_FREQUENCY,
-            sample_batch_size=SAMPLE_BATCH_SIZE,
-            )
+        grid_world,
+        discount_factor=DISCOUNT_FACTOR,
+        learning_rate=LEARNING_RATE,
+        epsilon=EPSILON,
+        buffer_size=BUFFER_SIZE,
+        update_frequency=UPDATE_FREQUENCY,
+        sample_batch_size=SAMPLE_BATCH_SIZE,
+    )
     policy_iteration.run(max_episode=iter_num)
     grid_world.visualize(
         policy_iteration.get_max_state_values(),
@@ -129,11 +132,9 @@ def run_Q_Learning(grid_world: GridWorld, iter_num: int):
     print()
 
 
-
-
 if __name__ == "__main__":
+    np.random.seed(825)
     grid_world = init_grid_world()
-    run_MC_policy_iteration(grid_world, 512000)
+    # run_MC_policy_iteration(grid_world, 512000)
     run_SARSA(grid_world, 512000)
     run_Q_Learning(grid_world, 50000)
-
