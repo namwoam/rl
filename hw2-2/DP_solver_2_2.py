@@ -212,15 +212,35 @@ class Q_Learning(DynamicProgramming):
 
     def add_buffer(self, s, a, r, s2, d) -> None:
         # TODO: add new transition to buffer
+        self.buffer.append((s, a, r, s2, d))
+        return
         raise NotImplementedError
 
     def sample_batch(self) -> np.ndarray:
         # TODO: sample a batch of index of transitions from the buffer
-        raise NotImplementedError
+        return np.random.choice(
+            len(self.buffer), size=self.sample_batch_size)
 
     def policy_eval_improve(self, s, a, r, s2, is_done) -> None:
         """Evaluate the policy and update the values after one step"""
         # TODO: Evaluate Q value after one step and improve the policy
+        if s is None or a is None or r is None:
+            return
+        elif is_done:
+            self.q_values[s, a] = self.q_values[s, a] + \
+                self.lr*(r - self.q_values[s, a])
+        else:
+            self.q_values[s, a] = self.q_values[s, a] + self.lr * \
+                (r + self.discount_factor *
+                 np.max(self.q_values[s2]) - self.q_values[s, a])
+        q = self.q_values[s]
+        # print(q)
+        new_policy = np.full((self.action_space),
+                             self.epsilon / self.action_space)
+        new_policy[np.argmax(q)] = self.epsilon / \
+            self.action_space + 1 - self.epsilon
+        self.policy[s] = new_policy
+        return
         raise NotImplementedError
 
     def run(self, max_episode=1000) -> None:
@@ -233,8 +253,29 @@ class Q_Learning(DynamicProgramming):
         prev_r = None
         is_done = False
         transition_count = 0
-        while iter_episode < max_episode:
+        for iter_episode in tqdm(range(max_episode)):
             # TODO: write your code here
             # hint: self.grid_world.reset() is NOT needed here
-
-            raise NotImplementedError
+            while True:
+                # TODO: write your code here
+                # hint: self.grid_world.reset() is NOT needed here
+                action = np.random.choice(
+                    self.action_space, p=self.policy[current_state])
+                next_state, reward, done = self.grid_world.step(action)
+                self.add_buffer(prev_s, prev_a, prev_r, current_state, is_done)
+                transition_count += 1
+                if transition_count % self.update_frequency == 0:
+                    for iteration_index in self.sample_batch():
+                        transition = self.buffer[iteration_index]
+                        assert len(transition) == 5
+                        self.policy_eval_improve(
+                            transition[0], transition[1], transition[2], transition[3], transition[4])
+                prev_s = current_state
+                prev_a = action
+                prev_r = reward
+                is_done = done
+                current_state = next_state
+                if is_done:
+                    break
+        return
+        raise NotImplementedError

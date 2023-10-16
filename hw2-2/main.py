@@ -135,6 +135,6 @@ def run_Q_Learning(grid_world: GridWorld, iter_num: int):
 if __name__ == "__main__":
     np.random.seed(825)
     grid_world = init_grid_world()
-    # run_MC_policy_iteration(grid_world, 512000)
+    run_MC_policy_iteration(grid_world, 512000)
     run_SARSA(grid_world, 512000)
     run_Q_Learning(grid_world, 50000)
