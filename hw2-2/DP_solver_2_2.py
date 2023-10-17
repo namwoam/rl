@@ -31,7 +31,8 @@ class DynamicProgramming:
 
     def record_episode(self, model_name: str) -> None:
         self.reward_history.append(np.average(self.episode_reward))
-        self.loss_history.append(np.average(self.episode_loss))
+        if len(self.episode_loss) != 0:
+            self.loss_history.append(np.average(self.episode_loss))
         self.episode_reward = []
         self.episode_loss = []
 
@@ -260,8 +261,8 @@ class Q_Learning(DynamicProgramming):
             self.q_values[s, a] = self.q_values[s, a] + \
                 self.lr*(r - self.q_values[s, a])
         else:
-            self.record_loss((r + self.discount_factor *
-                              np.max(self.q_values[s2]) - self.q_values[s, a]))
+            self.record_loss(r + self.discount_factor *
+                              np.max(self.q_values[s2]) - self.q_values[s, a])
             self.q_values[s, a] = self.q_values[s, a] + self.lr * \
                 (r + self.discount_factor *
                  np.max(self.q_values[s2]) - self.q_values[s, a])

@@ -16,7 +16,7 @@ GOAL_REWARD = 1.0
 TRAP_REWARD = -1.0
 DISCOUNT_FACTOR = 0.99
 LEARNING_RATE = 0.01
-EPSILON = 0.2
+EPSILON = 0.1
 BUFFER_SIZE = 10000
 UPDATE_FREQUENCY = 200
 SAMPLE_BATCH_SIZE = 500
@@ -53,6 +53,16 @@ def init_grid_world(maze_file: str = "maze.txt"):
 
 
 def run_MC_policy_iteration(grid_world: GridWorld, iter_num: int):
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="rl-hw2",
+
+        # track hyperparameters and run metadata
+        config={
+            "epsilon": EPSILON,
+            "model":"MC"
+        }
+    )
     print(bold(underline("MC Policy Iteration")))
     policy_iteration = MonteCarloPolicyIteration(
         grid_world,
@@ -76,9 +86,20 @@ def run_MC_policy_iteration(grid_world: GridWorld, iter_num: int):
     )
     grid_world.reset()
     print()
+    wandb.finish()
 
 
 def run_SARSA(grid_world: GridWorld, iter_num: int):
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="rl-hw2",
+
+        # track hyperparameters and run metadata
+        config={
+            "epsilon": EPSILON,
+            "model":"SARSA"
+        }
+    )
     print(bold(underline("SARSA Policy Iteration")))
     policy_iteration = SARSA(
         grid_world,
@@ -102,9 +123,20 @@ def run_SARSA(grid_world: GridWorld, iter_num: int):
     )
     grid_world.reset()
     print()
+    wandb.finish()
 
 
 def run_Q_Learning(grid_world: GridWorld, iter_num: int):
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="rl-hw2",
+
+        # track hyperparameters and run metadata
+        config={
+            "epsilon": EPSILON,
+            "model":"Q-Learning"
+        }
+    )
     print(bold(underline("Q_Learning Policy Iteration")))
     policy_iteration = Q_Learning(
         grid_world,
@@ -131,19 +163,12 @@ def run_Q_Learning(grid_world: GridWorld, iter_num: int):
     )
     grid_world.reset()
     print()
+    wandb.finish()
 
 
 if __name__ == "__main__":
     np.random.seed(825)
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project="rl-hw2",
-
-        # track hyperparameters and run metadata
-        config={
-            "epsilon": EPSILON,
-        }
-    )
+    
     grid_world = init_grid_world()
     run_MC_policy_iteration(grid_world, 512000)
     run_SARSA(grid_world, 512000)
