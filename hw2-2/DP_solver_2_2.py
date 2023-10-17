@@ -3,6 +3,7 @@ from collections import deque
 from gridworld import GridWorld
 
 from tqdm import tqdm
+import wandb
 
 
 class DynamicProgramming:
@@ -23,6 +24,25 @@ class DynamicProgramming:
         self.policy = np.ones(
             (self.state_space, self.action_space)) / self.action_space
         self.policy_index = np.zeros(self.state_space, dtype=int)
+        self.episode_reward = []
+        self.episode_loss = []
+        self.reward_history = []
+        self.loss_history = []
+
+    def record_episode(self, model_name: str) -> None:
+        self.reward_history.append(np.average(self.episode_reward))
+        self.loss_history.append(np.average(self.episode_loss))
+        self.episode_reward = []
+        self.episode_loss = []
+
+        wandb.log({f"{model_name}_reward": np.average(
+            self.reward_history[-10:]), f"{model_name}_loss": np.average(self.loss_history[-10:])})
+
+    def record_reward(self, reward: float) -> None:
+        self.episode_reward.append(reward)
+
+    def record_loss(self, loss: float) -> None:
+        self.episode_loss.append(np.abs(loss))
 
     def get_policy_index(self) -> np.ndarray:
         """Return the policy
@@ -68,6 +88,8 @@ class MonteCarloPolicyIteration(DynamicProgramming):
         for t in range(T):
 
             g_record.append(G)
+            self.record_loss(
+                G - self.q_values[state_trace[t], action_trace[t]])
             self.q_values[state_trace[t], action_trace[t]] = self.q_values[state_trace[t],
                                                                            action_trace[t]] + self.lr*(G - self.q_values[state_trace[t], action_trace[t]])
             G = (G - reward_trace[t]) / self.discount_factor
@@ -103,7 +125,7 @@ class MonteCarloPolicyIteration(DynamicProgramming):
             step = 0
             # TODO: write your code here
             # hint: self.grid_world.reset() is NOT needed here
-            while step < step_limit:
+            while True:
                 # print(self.policy[current_state])
                 action = np.random.choice(
                     self.action_space, p=self.policy[current_state])
@@ -111,6 +133,7 @@ class MonteCarloPolicyIteration(DynamicProgramming):
                 state_trace.append(next_state)
                 action_trace.append(action)
                 reward_trace.append(reward)
+                self.record_reward(reward)
                 current_state = next_state
                 step += 1
                 if done:
@@ -121,6 +144,7 @@ class MonteCarloPolicyIteration(DynamicProgramming):
             state_trace = [current_state]
             action_trace = []
             reward_trace = []
+            self.record_episode("MC")
             # raise NotImplementedError
 
 
@@ -146,9 +170,12 @@ class SARSA(DynamicProgramming):
         if s is None or a is None or r is None:
             return
         elif is_done:
+            self.record_loss(r - self.q_values[s, a])
             self.q_values[s, a] = self.q_values[s, a] + \
                 self.lr*(r - self.q_values[s, a])
         else:
+            self.record_loss(r + self.discount_factor *
+                             self.q_values[s2, a2] - self.q_values[s, a])
             self.q_values[s, a] = self.q_values[s, a] + self.lr * \
                 (r + self.discount_factor *
                  self.q_values[s2, a2] - self.q_values[s, a])
@@ -178,6 +205,7 @@ class SARSA(DynamicProgramming):
                 action = np.random.choice(
                     self.action_space, p=self.policy[current_state])
                 next_state, reward, done = self.grid_world.step(action)
+                self.record_reward(reward)
                 self.policy_eval_improve(
                     prev_s, prev_a, prev_r, current_state, action, is_done)
                 prev_s = current_state
@@ -186,6 +214,7 @@ class SARSA(DynamicProgramming):
                 is_done = done
                 current_state = next_state
                 if is_done:
+                    self.record_episode("SARSA")
                     break
 
         return
@@ -227,9 +256,12 @@ class Q_Learning(DynamicProgramming):
         if s is None or a is None or r is None:
             return
         elif is_done:
+            self.record_loss(r - self.q_values[s, a])
             self.q_values[s, a] = self.q_values[s, a] + \
                 self.lr*(r - self.q_values[s, a])
         else:
+            self.record_loss((r + self.discount_factor *
+                              np.max(self.q_values[s2]) - self.q_values[s, a]))
             self.q_values[s, a] = self.q_values[s, a] + self.lr * \
                 (r + self.discount_factor *
                  np.max(self.q_values[s2]) - self.q_values[s, a])
@@ -262,6 +294,7 @@ class Q_Learning(DynamicProgramming):
                 action = np.random.choice(
                     self.action_space, p=self.policy[current_state])
                 next_state, reward, done = self.grid_world.step(action)
+                self.record_reward(reward)
                 self.add_buffer(prev_s, prev_a, prev_r, current_state, is_done)
                 transition_count += 1
                 if transition_count % self.update_frequency == 0:
@@ -276,6 +309,7 @@ class Q_Learning(DynamicProgramming):
                 is_done = done
                 current_state = next_state
                 if is_done:
+                    self.record_episode("Q_Learning")
                     break
         return
         raise NotImplementedError
