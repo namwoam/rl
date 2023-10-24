@@ -1,6 +1,5 @@
 import random
 import numpy as np
-import wandb
 
 from DP_solver_2_2 import (
     MonteCarloPolicyIteration,
@@ -168,7 +167,14 @@ def run_Q_Learning(grid_world: GridWorld, iter_num: int):
 
 if __name__ == "__main__":
     np.random.seed(825)
+<<<<<<< Updated upstream
     
+=======
+<<<<<<< HEAD
+=======
+    
+>>>>>>> d6afeb8b47ac71ea859f8eec64d7f32e18c7426b
+>>>>>>> Stashed changes
     grid_world = init_grid_world()
     run_MC_policy_iteration(grid_world, 512000)
     run_SARSA(grid_world, 512000)

@@ -2,8 +2,8 @@ import numpy as np
 from collections import deque
 from gridworld import GridWorld
 
-from tqdm import tqdm
-import wandb
+# from tqdm import tqdm
+# import wandb
 
 
 class DynamicProgramming:
@@ -30,6 +30,8 @@ class DynamicProgramming:
         self.loss_history = []
 
     def record_episode(self, model_name: str) -> None:
+        return
+        """
         self.reward_history.append(np.average(self.episode_reward))
         if len(self.episode_loss) != 0:
             self.loss_history.append(np.average(self.episode_loss))
@@ -38,12 +40,14 @@ class DynamicProgramming:
 
         wandb.log({f"{model_name}_reward": np.average(
             self.reward_history[-10:]), f"{model_name}_loss": np.average(self.loss_history[-10:])})
-
+        """
     def record_reward(self, reward: float) -> None:
-        self.episode_reward.append(reward)
+        return 
+        #self.episode_reward.append(reward)
 
     def record_loss(self, loss: float) -> None:
-        self.episode_loss.append(np.abs(loss))
+        return 
+        #self.episode_loss.append(np.abs(loss))
 
     def get_policy_index(self) -> np.ndarray:
         """Return the policy
@@ -122,7 +126,7 @@ class MonteCarloPolicyIteration(DynamicProgramming):
         state_trace = [current_state]
         action_trace = []
         reward_trace = []
-        for iter_episode in tqdm(range(max_episode)):
+        for iter_episode in range(max_episode):
             step = 0
             # TODO: write your code here
             # hint: self.grid_world.reset() is NOT needed here
@@ -199,7 +203,7 @@ class SARSA(DynamicProgramming):
         prev_a = None
         prev_r = None
         is_done = False
-        for iter_episode in tqdm(range(max_episode)):
+        for iter_episode in range(max_episode):
             while True:
                 # TODO: write your code here
                 # hint: self.grid_world.reset() is NOT needed here
@@ -286,7 +290,7 @@ class Q_Learning(DynamicProgramming):
         prev_r = None
         is_done = False
         transition_count = 0
-        for iter_episode in tqdm(range(max_episode)):
+        for iter_episode in range(max_episode):
             # TODO: write your code here
             # hint: self.grid_world.reset() is NOT needed here
             while True:
