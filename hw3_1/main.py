@@ -24,13 +24,15 @@ RENDER_MODE = "ansi"
 
 
 def print_sa(obs, action, env):
-    print("state:", obs[0], "action: ", env.grid_world.ACTION_INDEX_TO_STR[action[0]])
+    print("state:", obs[0], "action: ",
+          env.grid_world.ACTION_INDEX_TO_STR[action[0]])
 
 
-def test_task(filename="tasks/lava.txt", algorithm = PPO):
+def test_task(filename="tasks/lava.txt", algorithm=PPO):
     task_name = os.path.split(filename)[1].replace(".txt", "")
     print("Task: ", task_name)
-    gym.register(f"GridWorld{task_name.capitalize()}-v1", entry_point="gridworld:GridWorldEnv")
+    gym.register(f"GridWorld{task_name.capitalize()}-v1",
+                 entry_point="gridworld:GridWorldEnv")
     env = gym.make(
         f"GridWorld{task_name.capitalize()}-v1",
         render_mode=RENDER_MODE,
@@ -55,7 +57,7 @@ def test_task(filename="tasks/lava.txt", algorithm = PPO):
             action, _states = model.predict(obs, deterministic=True)
             vec_env.render()
             # you can use pring_sa to debug state action pair
-            print_sa(obs, action, env)
+            # print_sa(obs, action, env)
             obs, reward, done, info = vec_env.step(action)
 
 
@@ -108,19 +110,25 @@ def test_correctness(filename="tasks/maze.txt"):
     result = []
     grid_world.set_current_state(state[0])
     for _, a, r, d, t, ns in zip(state, action, reward, done, truncated, next_state):
-        next_state_prediction, reward_prediction, done_prediction, truncated_prediction = grid_world.step(a)
+        next_state_prediction, reward_prediction, done_prediction, truncated_prediction = grid_world.step(
+            a)
         if done_prediction:
             next_state_prediction = grid_world.reset()
-            result.append( (next_state_prediction in grid_world._init_states) and reward_prediction == r and done_prediction == d and truncated_prediction == t)
+            result.append((next_state_prediction in grid_world._init_states)
+                          and reward_prediction == r and done_prediction == d and truncated_prediction == t)
             grid_world.set_current_state(ns)
         else:
-            result.append(next_state_prediction == ns and reward_prediction == r and done_prediction == d and truncated_prediction == t)
+            result.append(next_state_prediction == ns and reward_prediction ==
+                          r and done_prediction == d and truncated_prediction == t)
+    print(result)
+    print(
+        f"The correctness of the task {task_name}: {np.round(np.mean(result) * 100, 2)} %")
 
-    print(f"The correctness of the task {task_name}: {np.round(np.mean(result) * 100, 2)} %")
 
-def write_gif(filename="lava.txt", algorithm = PPO):
+def write_gif(filename="lava.txt", algorithm=PPO):
     task_name = os.path.split(filename)[1].replace(".txt", "")
-    gym.register(f"GridWorld{task_name.capitalize()}-v1", entry_point="gridworld:GridWorldEnv")
+    gym.register(f"GridWorld{task_name.capitalize()}-v1",
+                 entry_point="gridworld:GridWorldEnv")
     env = gym.make(
         f"GridWorld{task_name.capitalize()}-v1",
         render_mode=RENDER_MODE,
@@ -184,9 +192,9 @@ if __name__ == "__main__":
     test_correctness("tasks/portal.txt")
     test_correctness("tasks/maze.txt")
     # Write one trajectory to gif
-    # write_gif("tasks/lava.txt", algorithm=PPO)
-    # write_gif("tasks/exit.txt", algorithm=PPO)
-    # write_gif("tasks/bait.txt", algorithm=PPO)
-    # write_gif("tasks/door.txt", algorithm=A2C)
-    # write_gif("tasks/portal.txt", algorithm=PPO)
+    write_gif("tasks/lava.txt", algorithm=PPO)
+    write_gif("tasks/exit.txt", algorithm=PPO)
+    write_gif("tasks/bait.txt", algorithm=PPO)
+    write_gif("tasks/door.txt", algorithm=A2C)
+    write_gif("tasks/portal.txt", algorithm=PPO)
     write_gif("tasks/maze.txt", algorithm=PPO)

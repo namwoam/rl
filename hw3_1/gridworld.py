@@ -454,15 +454,16 @@ class GridWorld:
 
         next_coord = self._get_next_state(current_coord, action)
         next_state = self._state_list.index(next_coord)
-
+        if self._is_lava_state(next_coord):
+            return current_state, self.step_reward, True, False
+        self._current_state = next_state
+        if self._is_opened:
+            next_state += len(self._state_list)
         if self._is_key_state(next_coord):
             self.open_door()
         if self._is_bait_state(next_coord):
             self.bite()
-            current_state = next_state
-            return next_state, self._bait_reward + self.step_reward, False, False
-        if self._is_lava_state(next_coord):
-            return current_state, self.step_reward, True, False
+            return next_state, self._bait_reward, False, False
         return next_state, self.step_reward, False, False
         raise NotImplementedError
 
