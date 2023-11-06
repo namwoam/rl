@@ -102,6 +102,7 @@ class GridWorld:
             maze_file)[1].replace(".txt", "").capitalize()
         self._read_maze(maze_file)
         self.render_init(self.maze_name)
+        self.coord_memory = {}
 
         # if min_y is None you can initialize the agent in any state
         # if min_y is not None, you can initialize the agent in the state left to min_y
@@ -423,10 +424,11 @@ class GridWorld:
             next_state_coord[1] -= 1
         elif action == 3:
             next_state_coord[1] += 1
-        if not self._is_valid_state(next_state_coord) and self._is_portal_state(state_coord):
-            next_state_coord = self.portal_next_state[state_coord]
         if not self._is_valid_state(next_state_coord):
-            next_state_coord = state_coord
+            if self._is_portal_state(state_coord):
+                next_state_coord = self.portal_next_state[state_coord]
+            else:
+                next_state_coord = state_coord
         return tuple(next_state_coord)
 
     def step(self, action: int) -> tuple:
@@ -445,23 +447,25 @@ class GridWorld:
         self._step_count += 1
         if self._step_count > self.max_step:
             return current_state, self.step_reward, True, True
-        if self._is_goal_state(current_coord):
+        elif self._is_goal_state(current_coord):
             return current_state, self._goal_reward, True, False
-        if self._is_trap_state(current_coord):
+        elif self._is_trap_state(current_coord):
             return current_state, self._trap_reward, True, False
-        if self._is_exit_state(current_coord):
+        elif self._is_exit_state(current_coord):
             return current_state, self._exit_reward, True, False
 
         next_coord = self._get_next_state(current_coord, action)
-        next_state = self._state_list.index(next_coord)
-        if self._is_lava_state(next_coord):
-            return current_state, self.step_reward, True, False
+        if next_coord not in self.coord_memory:
+            self.coord_memory[next_coord] = self._state_list.index(next_coord)
+        next_state = self.coord_memory[next_coord]
         self._current_state = next_state
         if self._is_opened:
             next_state += len(self._state_list)
-        if self._is_key_state(next_coord):
+        if self._is_lava_state(next_coord):
+            return current_state, self.step_reward, True, False
+        elif self._is_key_state(next_coord):
             self.open_door()
-        if self._is_bait_state(next_coord):
+        elif self._is_bait_state(next_coord):
             self.bite()
             return next_state, self._bait_reward, False, False
         return next_state, self.step_reward, False, False

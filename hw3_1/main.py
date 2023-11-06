@@ -55,7 +55,7 @@ def test_task(filename="tasks/lava.txt", algorithm=PPO):
         done = False
         while not done:
             action, _states = model.predict(obs, deterministic=True)
-            vec_env.render()
+            # vec_env.render()
             # you can use pring_sa to debug state action pair
             # print_sa(obs, action, env)
             obs, reward, done, info = vec_env.step(action)
@@ -120,7 +120,6 @@ def test_correctness(filename="tasks/maze.txt"):
         else:
             result.append(next_state_prediction == ns and reward_prediction ==
                           r and done_prediction == d and truncated_prediction == t)
-    print(result)
     print(
         f"The correctness of the task {task_name}: {np.round(np.mean(result) * 100, 2)} %")
 
@@ -192,9 +191,9 @@ if __name__ == "__main__":
     test_correctness("tasks/portal.txt")
     test_correctness("tasks/maze.txt")
     # Write one trajectory to gif
-    write_gif("tasks/lava.txt", algorithm=PPO)
-    write_gif("tasks/exit.txt", algorithm=PPO)
-    write_gif("tasks/bait.txt", algorithm=PPO)
-    write_gif("tasks/door.txt", algorithm=A2C)
-    write_gif("tasks/portal.txt", algorithm=PPO)
-    write_gif("tasks/maze.txt", algorithm=PPO)
+    # write_gif("tasks/lava.txt", algorithm=PPO)
+    # write_gif("tasks/exit.txt", algorithm=PPO)
+    # write_gif("tasks/bait.txt", algorithm=PPO)
+    # write_gif("tasks/door.txt", algorithm=A2C)
+    # write_gif("tasks/portal.txt", algorithm=PPO)
+    # write_gif("tasks/maze.txt", algorithm=PPO)
