@@ -55,7 +55,7 @@ def test_task(filename="tasks/lava.txt", algorithm = PPO):
             action, _states = model.predict(obs, deterministic=True)
             vec_env.render()
             # you can use pring_sa to debug state action pair
-            # print_sa(obs, action, env)
+            print_sa(obs, action, env)
             obs, reward, done, info = vec_env.step(action)
 
 
@@ -189,4 +189,4 @@ if __name__ == "__main__":
     # write_gif("tasks/bait.txt", algorithm=PPO)
     # write_gif("tasks/door.txt", algorithm=A2C)
     # write_gif("tasks/portal.txt", algorithm=PPO)
-    # write_gif("tasks/maze.txt", algorithm=PPO)
+    write_gif("tasks/maze.txt", algorithm=PPO)

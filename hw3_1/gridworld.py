@@ -98,7 +98,8 @@ class GridWorld:
         self._state_list = []
         self._current_state = 0
         self.max_step = max_step
-        self.maze_name = os.path.split(maze_file)[1].replace(".txt", "").capitalize()
+        self.maze_name = os.path.split(
+            maze_file)[1].replace(".txt", "").capitalize()
         self._read_maze(maze_file)
         self.render_init(self.maze_name)
 
@@ -439,6 +440,30 @@ class GridWorld:
             tuple: next_state, reward, done, truncation
         """
         # TODO implement the step function here
+        current_state = self.get_current_state()
+        current_coord = self._state_list[current_state]
+        self._step_count += 1
+        if self._step_count > self.max_step:
+            return current_state, self.step_reward, True, True
+        if self._is_goal_state(current_coord):
+            return current_state, self._goal_reward, True, False
+        if self._is_trap_state(current_coord):
+            return current_state, self._trap_reward, True, False
+        if self._is_exit_state(current_coord):
+            return current_state, self._exit_reward, True, False
+
+        next_coord = self._get_next_state(current_coord, action)
+        next_state = self._state_list.index(next_coord)
+
+        if self._is_key_state(next_coord):
+            self.open_door()
+        if self._is_bait_state(next_coord):
+            self.bite()
+            current_state = next_state
+            return next_state, self._bait_reward + self.step_reward, False, False
+        if self._is_lava_state(next_coord):
+            return current_state, self.step_reward, True, False
+        return next_state, self.step_reward, False, False
         raise NotImplementedError
 
     def reset(self) -> int:
@@ -448,6 +473,12 @@ class GridWorld:
             int: initial state
         """
         # TODO implement the reset function here
+        if self._is_opened:
+            self.close_door()
+        if self._is_baited:
+            self.place_bait()
+        self._step_count = 0
+        return np.random.choice(self._init_states)
         raise NotImplementedError
 
     #############################
@@ -563,10 +594,12 @@ class GridWorldEnv(gym.Env):
         self.grid_world = GridWorld(maze_file, goal_reward, trap_reward,
                                     step_reward, exit_reward, bait_reward, bait_step_penalty, max_step)
 
-        self.metadata = {"render_modes": ["human", "ansi", "rgb_array"], "render_fps": 60}
+        self.metadata = {"render_modes": [
+            "human", "ansi", "rgb_array"], "render_fps": 60}
         # Define action and observation spaces
         self.action_space = spaces.Discrete(self.grid_world.get_action_space())
-        self.observation_space = spaces.Discrete(self.grid_world.get_state_space())
+        self.observation_space = spaces.Discrete(
+            self.grid_world.get_state_space())
 
     def reset(self, seed=None, **kwds: Any):
         # Reset the GridWorld
