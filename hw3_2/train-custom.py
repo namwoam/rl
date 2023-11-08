@@ -21,22 +21,22 @@ my_config = {
 
     "algorithm": PPO,
     "policy_network": "MlpPolicy",
-    "save_path": "models/modified_PPO",
+    "save_path": "models/lunar_PPO",
 
     "epoch_num": 30,
-    "timesteps_per_epoch": 100,
+    "timesteps_per_epoch": 1000,
     "eval_episode_num": 10,
 }
 
 
 def make_env():
-    env = gym.make('2048-v0')
+    env = gym.make("LunarLander-v2" , render_mode="human")
     return env
 
 
 def train(env, model, config):
 
-    current_best = 0
+    current_best = -1000
 
     for epoch in range(config["epoch_num"]):
 
@@ -55,7 +55,6 @@ def train(env, model, config):
         print(config["run_id"])
         print("Epoch: ", epoch)
         avg_score = 0
-        avg_highest = 0
         for seed in range(config["eval_episode_num"]):
             done = False
 
@@ -64,15 +63,15 @@ def train(env, model, config):
             obs = env.reset()
 
             # Interact with env using old Gym API
+            total_reward = 0
             while not done:
                 action, _state = model.predict(obs, deterministic=True)
                 obs, reward, done, info = env.step(action)
+                total_reward += reward
 
-            avg_highest += info[0]['highest']/config["eval_episode_num"]
-            avg_score += info[0]['score']/config["eval_episode_num"]
+            avg_score += total_reward/config["eval_episode_num"]
 
         print("Avg_score:  ", avg_score)
-        print("Avg_highest:", avg_highest)
         print()
         # wandb.log(
         #     {"avg_highest": avg_highest,
